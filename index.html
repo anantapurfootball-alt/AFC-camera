@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>AFC QR Scanner</title>
+
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+h1 {
+  font-size: 23px;
+  margin: 10px 0 4px;
+}
+
+.sub {
+  color: #aaa;
+  margin-bottom: 18px;
+}
+
+#reader {
+  width: 100%;
+  max-width: 500px;
+  margin: auto;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+#result {
+  max-width: 500px;
+  margin: 18px auto;
+  padding: 20px;
+  border-radius: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  background: #222;
+}
+
+.success {
+  background: #087f23 !important;
+}
+
+.warning {
+  background: #9a6b00 !important;
+}
+
+.error {
+  background: #9b1c1c !important;
+}
+
+.wait {
+  background: #222 !important;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>⚽ ANANTAPUR FOOTBALL CLUB</h1>
+
+<div class="sub">
+PLAYER QR CHECK-IN
+</div>
+
+<div id="reader"></div>
+
+<div id="result">
+📷 Point camera at player's QR
+</div>
+
+<script>
+
+let scanner = null;
+let locked = false;
+
+function showResult(message, type) {
+
+  const result =
+    document.getElementById("result");
+
+  result.innerHTML = message;
+  result.className = type || "";
+}
+
+
+function sendToAFC(decodedText) {
+
+  if (locked) return;
+
+  locked = true;
+
+  showResult(
+    "⏳ QR SCANNED<br><br>Sending to AFC...",
+    "wait"
+  );
+
+  if (window.opener && !window.opener.closed) {
+
+    window.opener.postMessage(
+      {
+        type: "AFC_QR_SCANNED",
+        qr: decodedText
+      },
+      "*"
+    );
+
+    setTimeout(function() {
+
+      showResult(
+        "✅ QR SENT<br><br>Check-in is being processed...",
+        "success"
+      );
+
+      setTimeout(function() {
+        window.close();
+      }, 1200);
+
+    }, 300);
+
+  } else {
+
+    showResult(
+      "❌ AFC tracker window not found.<br><br>" +
+      "Please open the scanner from the AFC tracker.",
+      "error"
+    );
+
+    locked = false;
+  }
+}
+
+
+function onScanSuccess(decodedText) {
+
+  sendToAFC(decodedText);
+
+}
+
+
+function onScanFailure(error) {
+
+  // Normal scanning failures are ignored.
+
+}
+
+
+scanner = new Html5QrcodeScanner(
+
+  "reader",
+
+  {
+    fps: 10,
+
+    qrbox: {
+      width: 280,
+      height: 280
+    },
+
+    aspectRatio: 1.0,
+
+    rememberLastUsedCamera: true
+  },
+
+  false
+
+);
+
+
+scanner.render(
+  onScanSuccess,
+  onScanFailure
+);
+
+</script>
+
+</body>
+
+</html>
